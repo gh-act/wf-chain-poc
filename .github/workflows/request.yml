@@ -1,0 +1,19 @@
+name: Request
+on:
+  pull_request_target:
+    branches: [main]
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  request:
+    runs-on: ubuntu-24.04
+    steps:
+      - run: |
+          jq -n --argjson e "$EVENT" --arg ev "$EV" --arg actor "$ACTOR" --arg tactor "$TACTOR" '{event: $ev, actor: $actor, triggering_actor: $tactor, wr: ($e.workflow_run // null | if . then {name, event, head_branch, head_sha, head_repository: .head_repository.full_name, pull_requests: [.pull_requests[]?.number], triggering_actor: .triggering_actor.login} else null end), pr: ($e.pull_request // null | if . then {number, head: .head.repo.full_name} else null end)}' | tee -a "$GITHUB_STEP_SUMMARY"
+        env:
+          EVENT: ${{ toJSON(github.event) }}
+          EV: ${{ github.event_name }}
+          ACTOR: ${{ github.actor }}
+          TACTOR: ${{ github.triggering_actor }}
